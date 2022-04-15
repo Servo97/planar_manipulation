@@ -5,7 +5,7 @@
     <link name="base_link">
         <contact>
             <lateral_friction value="1.0" />
-            <rolling_friction value="0.0" />
+            <rolling_friction value="0.001" />
             <contact_cfm value="0.0" />
             <contact_erp value="1.0" />
         </contact>
@@ -17,14 +17,14 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0" />
             <geometry>
-                <cylinder length="0.025" radius="0.035" />
+                <cylinder length="0.005" radius="0.007" />
             </geometry>
             <material name="orange" />
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0" />
             <geometry>
-                <cylinder length="0.025" radius="0.035" />
+                <cylinder length="0.005" radius="0.007" />
             </geometry>
         </collision>
     </link>

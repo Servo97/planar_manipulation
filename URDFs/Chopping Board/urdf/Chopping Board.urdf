@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="Chopping Board">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="-0.0525131158329784 -0.0164268889860182 0.0427946791446061"
+        rpy="0 0 0" />
+      <mass
+        value="6.78396452085858" />
+      <inertia
+        ixx="0.0553705158370438"
+        ixy="-6.62711409517496E-19"
+        ixz="-5.35154196760761E-18"
+        iyy="0.165880438837991"
+        iyz="-3.074587608134E-19"
+        izz="0.113427751367798" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Chopping Board/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Chopping Board/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+</robot>
