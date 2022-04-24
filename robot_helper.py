@@ -5,6 +5,34 @@ import numpy as np
 import time
 from collections import namedtuple
 from pybullet_tools.ikfast.ikfast import get_ik_joints, either_inverse_kinematics
+import matplotlib.pyplot as plt
+import cv2
+from glob import glob
+
+WIDTH = 225
+HEIGHT = 225
+
+
+def load_pybullet(filename, fixed_base=False, scale=1., **kwargs):
+    # fixed_base=False implies infinite base mass
+    with LockRenderer():
+        if filename.endswith('.urdf'):
+            flags = get_urdf_flags(**kwargs)
+            body = p.loadURDF(filename, useFixedBase=fixed_base, flags=flags,
+                              globalScaling=scale, physicsClientId=CLIENT)
+        elif filename.endswith('.sdf'):
+            body = p.loadSDF(filename, physicsClientId=CLIENT)
+        elif filename.endswith('.xml'):
+            body = p.loadMJCF(filename, physicsClientId=CLIENT)
+        elif filename.endswith('.bullet'):
+            body = p.loadBullet(filename, physicsClientId=CLIENT)
+        elif filename.endswith('.obj'):
+            # TODO: fixed_base => mass = 0?
+            body = create_obj(filename, scale=scale, **kwargs)
+        else:
+            raise ValueError(filename)
+    INFO_FROM_BODY[CLIENT, body] = ModelInfo(None, filename, fixed_base, scale)
+    return body
 
 def set_robot_to_reasonable_position(my_robot):
     reasonable_joint_numbers = list(range(0,7))
@@ -61,3 +89,26 @@ def control_joints(body, joints, positions, velocities=None, interpolate=10, **k
 
 def get_object_position(object):
     return np.array(pb_utils.get_link_pose(object, -1)[0])
+
+def get_gripper_position(robot):
+    tool_link = 7
+    return list(pb_utils.get_link_pose(robot, tool_link)[0])
+
+
+def wait_and_get_pressed_key():
+    while True:
+        keys = p.getKeyboardEvents()
+        for (key, value) in keys.items():
+            print("Value", value)
+            if value&p.KEY_WAS_TRIGGERED:
+                key_pressed = chr(key)
+                return key_pressed
+
+def plot_images(img):
+    img = np.reshape(img[2], (WIDTH, HEIGHT, 4))
+    files = glob('./data/gray/*.jpg')
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    img = img[35:185, ]
+    cv2.imwrite(f'./data/gray/img_{len(files)}.jpg', img)
+    # plt.imshow(img, cmap='gray', vmin=0, vmax=1)
+    # plt.show()
