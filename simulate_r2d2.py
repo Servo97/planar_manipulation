@@ -9,13 +9,12 @@ BOARD_DIMS = np.array((0.381, 0.304))
 FIXED_ROTATION = [1, 0, 0, 0]
 MOVABLE_JOINT_NUMBERS = range(7)
 
+p.resetSimulation(pb_utils.CLIENT)
 pb_utils.connect(use_gui=True)
-# p.setRealTimeSimulation(1)
+p.setRealTimeSimulation(1)
 pb_utils.add_data_path()
 p.setGravity(0, 0, -9.81)
 p.configureDebugVisualizer(p.COV_ENABLE_GUI,1)
-# p.setAdditionalSearchPath(pybullet_data.getDataPath())
-# p.resetSimulation()
 p.setTimeStep(1/500, physicsClientId=pb_utils.CLIENT)
 p.setPhysicsEngineParameter(
     solverResidualThreshold=0, physicsClientId=pb_utils.CLIENT)
@@ -29,7 +28,6 @@ objects = p.loadURDF("plane.urdf", basePosition=[
 with pb_utils.LockRenderer():
     franka = p.loadURDF('./assets/franka_description/robots/franka_panda.urdf', basePosition=[-0.4, 0, 0.000000], baseOrientation=[
                         0.000000, 0.000000, 0.000000, 1.000000], useFixedBase=True, globalScaling=1)
-
     pb_utils.set_dynamics(franka, 8, linearDamping=0, lateralFriction=1)
     pb_utils.set_dynamics(franka, 9, linearDamping=0, lateralFriction=1)
     cutting_board = p.loadURDF("./URDFs/Chopping Board/urdf/Chopping Board.urdf",
@@ -65,23 +63,13 @@ def sweep_over_chopping_board(robot, board):
     go_to_position(robot, board_pos)
 
 
-viewMatrix = p.computeViewMatrix(
-    cameraEyePosition=[0, 0, 0.6],
-    cameraTargetPosition=[0, 0, 0],
-    cameraUpVector=[0, 1, 0])
-
-projectionMatrix = p.computeProjectionMatrixFOV(
-    fov=45,
-    aspect=helper.WIDTH / helper.HEIGHT,
-    nearVal=0.02,
-    farVal=1)
     
 
 sweep_over_chopping_board(franka, cutting_board)
 
 
 amount_to_move = 0.05  # 5cm
-FIXED_ROTATION = (1, 0, 0, 0)
+FIXED_ROTATION = (0, 0, 0, 1)
 MOVABLE_JOINT_NUMBERS = [0, 1, 2, 3, 4, 5, 6]
 pos = helper.get_gripper_position(franka)
 while True:

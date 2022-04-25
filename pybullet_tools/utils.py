@@ -2166,13 +2166,13 @@ LinkState = namedtuple('LinkState', ['linkWorldPosition', 'linkWorldOrientation'
                                      'localInertialFramePosition', 'localInertialFrameOrientation',
                                      'worldLinkFramePosition', 'worldLinkFrameOrientation'])
 
-def get_link_state(body, link, kinematics=True, velocity=True):
+def get_link_state(body, link, sim_id=CLIENT, kinematics=True, velocity=True):
     # TODO: the defaults are set to False?
     # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/pybullet.c
     return LinkState(*p.getLinkState(body, link,
                                      #computeForwardKinematics=kinematics,
                                      #computeLinkVelocity=velocity,
-                                     physicsClientId=CLIENT))
+                                     physicsClientId=sim_id))
 
 def get_com_pose(body, link): # COM = center of mass
     if link == BASE_LINK:
@@ -2185,11 +2185,11 @@ def get_link_inertial_pose(body, link):
     link_state = get_link_state(body, link)
     return link_state.localInertialFramePosition, link_state.localInertialFrameOrientation
 
-def get_link_pose(body, link):
+def get_link_pose(body, link,sim_id = CLIENT):
     if link == BASE_LINK:
         return get_pose(body)
     # if set to 1 (or True), the Cartesian world position/orientation will be recomputed using forward kinematics.
-    link_state = get_link_state(body, link) #, kinematics=True, velocity=False)
+    link_state = get_link_state(body, link,sim_id) #, kinematics=True, velocity=False)
     return link_state.worldLinkFramePosition, link_state.worldLinkFrameOrientation
 
 def get_relative_pose(body, link1, link2=BASE_LINK):

@@ -13,26 +13,22 @@ WIDTH = 225
 HEIGHT = 225
 
 
-def load_pybullet(filename, fixed_base=False, scale=1., **kwargs):
-    # fixed_base=False implies infinite base mass
-    with LockRenderer():
-        if filename.endswith('.urdf'):
-            flags = get_urdf_flags(**kwargs)
-            body = p.loadURDF(filename, useFixedBase=fixed_base, flags=flags,
-                              globalScaling=scale, physicsClientId=CLIENT)
-        elif filename.endswith('.sdf'):
-            body = p.loadSDF(filename, physicsClientId=CLIENT)
-        elif filename.endswith('.xml'):
-            body = p.loadMJCF(filename, physicsClientId=CLIENT)
-        elif filename.endswith('.bullet'):
-            body = p.loadBullet(filename, physicsClientId=CLIENT)
-        elif filename.endswith('.obj'):
-            # TODO: fixed_base => mass = 0?
-            body = create_obj(filename, scale=scale, **kwargs)
-        else:
-            raise ValueError(filename)
-    INFO_FROM_BODY[CLIENT, body] = ModelInfo(None, filename, fixed_base, scale)
-    return body
+def make_robot(robot_filename):
+    pb_utils.connect(use_gui=True)
+    pb_utils.add_data_path()
+    pb_utils.load_pybullet("plane.urdf")
+    # pb_utils.set_real_time(False)
+    p.setTimeStep(1/500, physicsClientId=pb_utils.CLIENT)
+    p.setPhysicsEngineParameter(solverResidualThreshold=0, physicsClientId=pb_utils.CLIENT)
+    with pb_utils.LockRenderer():
+        # robot_idx = pb_utils.load_pybullet(robot_filename, fixed_base=True,basePosition=[-0.4, 0, 0.000000], baseOrientation=[0.000000, 0.000000, 0.000000, 1.000000])
+        robot_idx = pb_utils.load_pybullet(robot_filename, fixed_base=True)
+    pb_utils.set_camera(80, -30, 2) #reasonable view for most things
+    set_robot_to_reasonable_position(robot_idx)
+    #pb_utils.set_dynamics(robot_idx, 9, linearDamping=0, angularDamping=0, lateralFriction=1)
+    pb_utils.set_dynamics(robot_idx, 8, linearDamping=0, lateralFriction=1)
+    pb_utils.set_dynamics(robot_idx, 9, linearDamping=0,lateralFriction=1)
+    return robot_idx
 
 def set_robot_to_reasonable_position(my_robot):
     reasonable_joint_numbers = list(range(0,7))
@@ -56,8 +52,10 @@ def inverse_kinematics(object_index, position, rotation):
     p.restoreState(state)
     if conf is None:
         print("Error Position Is Out Of Franka's Workspace")
-        sys.exit()
-    return [np.degrees(a) for a in conf]
+        # sys.exit()
+        return None
+    else:
+        return [np.degrees(a) for a in conf]
 
 def wait_simulate_for_duration(duration):
     dt = pb_utils.get_time_step()
@@ -87,8 +85,8 @@ def control_joints(body, joints, positions, velocities=None, interpolate=10, **k
     control_joint_positions(body, joints, [np.radians(p) for p in positions], velocities, interpolate=interpolate, **kwargs)
 
 
-def get_object_position(object):
-    return np.array(pb_utils.get_link_pose(object, -1)[0])
+def get_object_position(object, sim_id):
+    return np.array(pb_utils.get_link_pose(object, -1, sim_id)[0])
 
 def get_gripper_position(robot):
     tool_link = 7
@@ -104,6 +102,16 @@ def wait_and_get_pressed_key():
                 key_pressed = chr(key)
                 return key_pressed
 
+VIEWMATRIX = p.computeViewMatrix(
+    cameraEyePosition=[0, 0, 0.6],
+    cameraTargetPosition=[0, 0, 0],
+    cameraUpVector=[0, 1, 0])
+
+PROJECTIONMATRIX = p.computeProjectionMatrixFOV(
+    fov=45,
+    aspect=WIDTH / HEIGHT,
+    nearVal=0.02,
+    farVal=1)
 def plot_images(img):
     img = np.reshape(img[2], (WIDTH, HEIGHT, 4))
     files = glob('./data/gray/*.jpg')
