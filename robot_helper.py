@@ -66,7 +66,7 @@ def wait_simulate_for_duration(duration):
         if after - before < dt:
             time.sleep(dt - (after - before))
 
-def control_joint_positions(body, joints, positions, velocities=None, interpolate=10, time_to_run=1, verbose=False, **kwargs):
+def control_joint_positions(body, joints, positions, velocities=None, interpolate=10, time_to_run=0.8, verbose=False, **kwargs):
     if interpolate is not None:
         current_positions = pb_utils.get_joint_positions(body, joints)
         waypoints = np.linspace(current_positions, positions, num=interpolate)[1:]
@@ -84,9 +84,11 @@ def control_joint_positions(body, joints, positions, velocities=None, interpolat
 def control_joints(body, joints, positions, velocities=None, interpolate=10, **kwargs):
     control_joint_positions(body, joints, [np.radians(p) for p in positions], velocities, interpolate=interpolate, **kwargs)
 
+def get_obj_com_position(object, sim_id = pb_utils.CLIENT):
+    return np.array(pb_utils.get_com_pose(object, -1)[0])
 
-def get_object_position(object, sim_id):
-    return np.array(pb_utils.get_link_pose(object, -1, sim_id)[0])
+def get_object_position(object, sim_id = pb_utils.CLIENT):
+    return np.array(pb_utils.get_link_pose(object, -1)[0])
 
 def get_gripper_position(robot):
     tool_link = 7

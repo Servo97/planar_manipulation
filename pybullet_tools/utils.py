@@ -854,7 +854,7 @@ def load_pybullet(filename, fixed_base=False, scale=1., **kwargs):
             raise ValueError(filename)
     INFO_FROM_BODY[CLIENT, body] = ModelInfo(None, filename, fixed_base, scale)
     return body
-
+ 
 def set_caching(cache=False):
     # enableFileCaching: Set to 0 to disable file caching, such as .obj wavefront file loading
     p.setPhysicsEngineParameter(enableFileCaching=int(cache), physicsClientId=CLIENT)
@@ -1108,7 +1108,7 @@ def connect(use_gui=True, shadows=True, color=None, width=None, height=None, mp4
     CLIENTS[sim_id] = True if use_gui else None
     if use_gui:
         # p.COV_ENABLE_PLANAR_REFLECTION
-        disable_preview()
+        # disable_preview()
         p.configureDebugVisualizer(p.COV_ENABLE_TINY_RENDERER, False, physicsClientId=sim_id) # TODO: does this matter?
         p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, shadows, physicsClientId=sim_id)
         p.configureDebugVisualizer(p.COV_ENABLE_MOUSE_PICKING, False, physicsClientId=sim_id) # mouse moves meshes
@@ -2166,13 +2166,13 @@ LinkState = namedtuple('LinkState', ['linkWorldPosition', 'linkWorldOrientation'
                                      'localInertialFramePosition', 'localInertialFrameOrientation',
                                      'worldLinkFramePosition', 'worldLinkFrameOrientation'])
 
-def get_link_state(body, link, sim_id=CLIENT, kinematics=True, velocity=True):
+def get_link_state(body, link, kinematics=True, velocity=True):
     # TODO: the defaults are set to False?
     # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/pybullet.c
     return LinkState(*p.getLinkState(body, link,
                                      #computeForwardKinematics=kinematics,
                                      #computeLinkVelocity=velocity,
-                                     physicsClientId=sim_id))
+                                     physicsClientId=CLIENT))
 
 def get_com_pose(body, link): # COM = center of mass
     if link == BASE_LINK:
@@ -2185,11 +2185,11 @@ def get_link_inertial_pose(body, link):
     link_state = get_link_state(body, link)
     return link_state.localInertialFramePosition, link_state.localInertialFrameOrientation
 
-def get_link_pose(body, link,sim_id = CLIENT):
+def get_link_pose(body, link):
     if link == BASE_LINK:
         return get_pose(body)
     # if set to 1 (or True), the Cartesian world position/orientation will be recomputed using forward kinematics.
-    link_state = get_link_state(body, link,sim_id) #, kinematics=True, velocity=False)
+    link_state = get_link_state(body, link) #, kinematics=True, velocity=False)
     return link_state.worldLinkFramePosition, link_state.worldLinkFrameOrientation
 
 def get_relative_pose(body, link1, link2=BASE_LINK):

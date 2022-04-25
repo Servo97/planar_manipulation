@@ -9,13 +9,13 @@ BOARD_DIMS = np.array((0.381, 0.304))
 FIXED_ROTATION = [1, 0, 0, 0]
 MOVABLE_JOINT_NUMBERS = range(7)
 
-p.resetSimulation(pb_utils.CLIENT)
+# p.resetSimulation(pb_utils.CLIENT)
 pb_utils.connect(use_gui=True)
-p.setRealTimeSimulation(1)
+# p.setRealTimeSimulation(1)
 pb_utils.add_data_path()
 p.setGravity(0, 0, -9.81)
 p.configureDebugVisualizer(p.COV_ENABLE_GUI,1)
-p.setTimeStep(1/500, physicsClientId=pb_utils.CLIENT)
+p.setTimeStep(1/1000, physicsClientId=pb_utils.CLIENT)
 p.setPhysicsEngineParameter(
     solverResidualThreshold=0, physicsClientId=pb_utils.CLIENT)
 pb_utils.set_camera(90, -89, 1)
@@ -30,8 +30,8 @@ with pb_utils.LockRenderer():
                         0.000000, 0.000000, 0.000000, 1.000000], useFixedBase=True, globalScaling=1)
     pb_utils.set_dynamics(franka, 8, linearDamping=0, lateralFriction=1)
     pb_utils.set_dynamics(franka, 9, linearDamping=0, lateralFriction=1)
-    cutting_board = p.loadURDF("./URDFs/Chopping Board/urdf/Chopping Board.urdf",
-                               0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000)
+    cutting_board = p.loadURDF("./URDFs/Chopping Board/urdf/Chopping Board.urdf", basePosition=[
+                     0.000000, 0.000000, 0.025], baseOrientation=[0.000000, 0.000000, 0.000000, 1.000000], useFixedBase=True)
     xs, ys = np.random.choice(np.linspace(-0.33/2, 0.33/2, 2000), 100,
                               replace=False), np.random.choice(np.linspace(-0.25/2, 0.25/2, 2000), 100, replace=False)
     for i in range(70):
@@ -53,11 +53,11 @@ for i in range(-1, 10):
 
 def go_to_position(robot, pos):
     desired_joints = helper.inverse_kinematics(robot, pos, FIXED_ROTATION)
-    helper.control_joints(robot, MOVABLE_JOINT_NUMBERS, desired_joints)
+    helper.control_joints(robot, MOVABLE_JOINT_NUMBERS, desired_joints, velocity_scale=1)
 
 
 def sweep_over_chopping_board(robot, board):
-    board_pos = helper.get_object_position(board)
+    board_pos = helper.get_obj_com_position(board)
     board_pos[2] += 0.02
     board_pos[:2] -= BOARD_DIMS/2
     go_to_position(robot, board_pos)
@@ -74,33 +74,36 @@ MOVABLE_JOINT_NUMBERS = [0, 1, 2, 3, 4, 5, 6]
 pos = helper.get_gripper_position(franka)
 while True:
     imgs = p.getCameraImage(width=helper.WIDTH,height=helper.HEIGHT,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix, renderer=p.ER_BULLET_HARDWARE_OPENGL)
-    key_pressed = helper.wait_and_get_pressed_key()
-    if key_pressed == "w":
-        print("Moving backward")
-        # TODO move robot 5cm backward (in the negative x direction)
-        pos[0] -= amount_to_move
-    elif key_pressed == "s":
-        print("Moving forward")
-        # TODO move robot 5cm forward (in the positive x direction)
-        pos[0] += amount_to_move
-    elif key_pressed == "d":
-        print("Moving robot to the right")
-        # TODO move robot 5cm to the right (positive y direction)
-        pos[1] += amount_to_move
-    elif key_pressed == "a":
-        print("Moving robot to the left")
-        # TODO move robot 5cm to the left (negative y direction)
-        pos[1] -= amount_to_move
-    elif key_pressed == "q":
-        print("Moving robot up")
-        # TODO move robot 5cm up (positive z direction)
-        pos[2] += amount_to_move
-    elif key_pressed == "e":
-        print("Moving robot down")
-        # TODO move robot 5cm down (negative z direction)
-        pos[2] -= amount_to_move
-    elif key_pressed == "o":
-        helper.plot_images(imgs)
+    # key_pressed = helper.wait_and_get_pressed_key()
+    # if key_pressed == "w":
+    #     print("Moving backward")
+    #     # TODO move robot 5cm backward (in the negative x direction)
+    #     pos[0] -= amount_to_move
+    # elif key_pressed == "s":
+    #     print("Moving forward")
+    #     # TODO move robot 5cm forward (in the positive x direction)
+    #     pos[0] += amount_to_move
+    # elif key_pressed == "d":
+    #     print("Moving robot to the right")
+    #     # TODO move robot 5cm to the right (positive y direction)
+    #     pos[1] += amount_to_move
+    # elif key_pressed == "a":
+    #     print("Moving robot to the left")
+    #     # TODO move robot 5cm to the left (negative y direction)
+    #     pos[1] -= amount_to_move
+    # elif key_pressed == "q":
+    #     print("Moving robot up")
+    #     # TODO move robot 5cm up (positive z direction)
+    #     pos[2] += amount_to_move
+    # elif key_pressed == "e":
+    #     print("Moving robot down")
+    #     # TODO move robot 5cm down (negative z direction)
+    #     pos[2] -= amount_to_move
+    # elif key_pressed == "o":
+    #     helper.plot_images(imgs)
 
-    desired_joints = helper.inverse_kinematics(franka, pos, FIXED_ROTATION)
-    helper.control_joints(franka, [0, 1, 2, 3, 4, 5, 6], desired_joints)
+    # desired_joints = helper.inverse_kinematics(franka, pos, FIXED_ROTATION)
+    # helper.control_joints(franka, [0, 1, 2, 3, 4, 5, 6], desired_joints)
+
+    while True:
+        p.stepSimulation(pb_utils.CLIENT)

@@ -3,6 +3,7 @@ import time
 import numpy as np
 import pybullet as p
 from collections import defaultdict, deque, namedtuple
+from pybullet_tools.ikfast.ikfast import get_ik_joints, either_inverse_kinematics
 
 FIXED_ROTATION = (1, 0, 0, 0)
 MOVABLE_JOINT_NUMBERS = [0,1,2,3,4,5,6]
@@ -64,9 +65,30 @@ class Franka:
         joint_vel = [state[1] for state in joint_states]
         return joint_pos, joint_vel
 
-    def calculate_inverse_kinematics(self, position, orientation):
-        return p.calculateInverseKinematics(self.franka, 7, position, orientation)
+    # def calculate_inverse_kinematics(self, position, orientation):
+    #     return p.calculateInverseKinematics(self.franka, 7, position, orientation)
 
+    def calculate_inverse_kinematics(self, position, orientation):
+        state = p.saveState()
+        offset = 0.1
+        position_up = (position[0], position[1], position[2]+offset)
+        goal_ee_pose = (position_up, orientation)
+        tool_link = 7
+        IKFastInfo = namedtuple('IKFastInfo', ['module_name', 'base_link', 'ee_link', 'free_joints'])
+        info = IKFastInfo(module_name='franka_panda.ikfast_panda_arm', base_link='panda_link0', ee_link='panda_link7',
+                        free_joints=['panda_joint6'])
+        ik_joints = get_ik_joints(self.franka, info, tool_link)
+        pb_kwargs = {"pos_tolerance": 1e-3, "ori_tolerance": 3.14*1e-3, "max_attempts": 5,
+                    "max_time": 500000000, "fixed_joints": []}
+        if True: #with pb_utils.LockRenderer():
+            conf = next(either_inverse_kinematics(self.franka, info, tool_link, goal_ee_pose, use_pybullet=True, **pb_kwargs),None)
+        p.restoreState(state)
+        if conf is None:
+            print("Error Position Is Out Of Franka's Workspace")
+            # sys.exit()
+            return None
+        else:
+            return [np.degrees(a) for a in conf]
     # def calculate_inverse_dynamics(self, pos, vel, desired_acc):
     #     """"""
     #     assert len(pos) == len(vel) and len(vel) == len(desired_acc)
