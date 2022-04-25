@@ -4,10 +4,21 @@ import pybullet_data
 import numpy as np
 import time
 import robot_helper as helper
+from scipy.spatial.transform import Rotation as R
 ############ GLOBAL VARIABLES #################
 BOARD_DIMS = np.array((0.381, 0.304))
 FIXED_ROTATION = [1, 0, 0, 0]
 MOVABLE_JOINT_NUMBERS = range(7)
+VIEWMATRIX = p.computeViewMatrix(
+    cameraEyePosition=[0, 0, 0.6],
+    cameraTargetPosition=[0, 0, 0],
+    cameraUpVector=[0, 1, 0])
+
+PROJECTIONMATRIX = p.computeProjectionMatrixFOV(
+    fov=45,
+    aspect=helper.WIDTH / helper.HEIGHT,
+    nearVal=0.02,
+    farVal=1)
 
 # p.resetSimulation(pb_utils.CLIENT)
 pb_utils.connect(use_gui=True)
@@ -51,59 +62,55 @@ for i in range(-1, 10):
 # knife = p.loadURDF("./URDFs/knife.urdf", -0.1, -0.1, 0.05, 0.000000, 0.000000, 0.000000, 1.000000)
 
 
-def go_to_position(robot, pos):
-    desired_joints = helper.inverse_kinematics(robot, pos, FIXED_ROTATION)
+def go_to_position(robot, pos, rot = FIXED_ROTATION):
+    print(pos, rot)
+    desired_joints = helper.inverse_kinematics(robot, pos, rot)
     helper.control_joints(robot, MOVABLE_JOINT_NUMBERS, desired_joints, velocity_scale=1)
 
-
-def sweep_over_chopping_board(robot, board):
+def initialize_robot_arm(robot, board):
     board_pos = helper.get_obj_com_position(board)
-    board_pos[2] += 0.02
+    board_pos[2] += 0.1
+    board_pos[:2] -= BOARD_DIMS/2
+    go_to_position(robot, board_pos)
+
+def sweep_over_chopping_board(robot, x, y, theta, l, z = 0.02):
+    theta = theta/180*np.pi
+    r = R.from_euler('y', theta)
+    rotation = r.as_quat()
+    # rotation = rotation[1:]+rotation[:1]
+    print(rotation)
+    go_to_position(robot, [x,y,0.1], FIXED_ROTATION)
+    time.sleep(0.5)
+    go_to_position(robot, [x,y,z], FIXED_ROTATION)
+    time.sleep(0.5)
+    go_to_position(robot, [x+np.cos(theta)*l, y+np.sin(theta)*l, z], FIXED_ROTATION)
+    time.sleep(0.5)
+    go_to_position(robot, [x+np.cos(theta)*l, y+np.sin(theta)*l, 0.1], FIXED_ROTATION)
+
+def get_outta_the_way(robot, board):
+    board_pos = helper.get_obj_com_position(board)
+    board_pos[2] += 0.1
     board_pos[:2] -= BOARD_DIMS/2
     go_to_position(robot, board_pos)
 
 
-    
-
-sweep_over_chopping_board(franka, cutting_board)
-
-
 amount_to_move = 0.05  # 5cm
-FIXED_ROTATION = (0, 0, 0, 1)
+# FIXED_ROTATION = (0, 0, 0, 1)
 MOVABLE_JOINT_NUMBERS = [0, 1, 2, 3, 4, 5, 6]
 pos = helper.get_gripper_position(franka)
 while True:
-    imgs = p.getCameraImage(width=helper.WIDTH,height=helper.HEIGHT,viewMatrix=viewMatrix,projectionMatrix=projectionMatrix, renderer=p.ER_BULLET_HARDWARE_OPENGL)
-    # key_pressed = helper.wait_and_get_pressed_key()
-    # if key_pressed == "w":
-    #     print("Moving backward")
-    #     # TODO move robot 5cm backward (in the negative x direction)
-    #     pos[0] -= amount_to_move
-    # elif key_pressed == "s":
-    #     print("Moving forward")
-    #     # TODO move robot 5cm forward (in the positive x direction)
-    #     pos[0] += amount_to_move
-    # elif key_pressed == "d":
-    #     print("Moving robot to the right")
-    #     # TODO move robot 5cm to the right (positive y direction)
-    #     pos[1] += amount_to_move
-    # elif key_pressed == "a":
-    #     print("Moving robot to the left")
-    #     # TODO move robot 5cm to the left (negative y direction)
-    #     pos[1] -= amount_to_move
-    # elif key_pressed == "q":
-    #     print("Moving robot up")
-    #     # TODO move robot 5cm up (positive z direction)
-    #     pos[2] += amount_to_move
-    # elif key_pressed == "e":
-    #     print("Moving robot down")
-    #     # TODO move robot 5cm down (negative z direction)
-    #     pos[2] -= amount_to_move
-    # elif key_pressed == "o":
-    #     helper.plot_images(imgs)
+    initialize_robot_arm(franka, cutting_board)
+    # Initialize Click Image
+    imgs = p.getCameraImage(width=helper.WIDTH,height=helper.HEIGHT,viewMatrix=VIEWMATRIX,projectionMatrix=PROJECTIONMATRIX, renderer=p.ER_BULLET_HARDWARE_OPENGL)
+    helper.plot_images(imgs)
+    # Sample possible starting point and orientation of gripper
+    # Move gripper by random distance l
+    x, y, theta, l = -0.01, -0.01, 90, 0.15
+    sweep_over_chopping_board(franka, x, y, theta, l, z = 0.02)
 
-    # desired_joints = helper.inverse_kinematics(franka, pos, FIXED_ROTATION)
-    # helper.control_joints(franka, [0, 1, 2, 3, 4, 5, 6], desired_joints)
+    # Take arm out of sight and click picture
+    get_outta_the_way(franka, cutting_board)
+    imgs = p.getCameraImage(width=helper.WIDTH,height=helper.HEIGHT,viewMatrix=VIEWMATRIX,projectionMatrix=PROJECTIONMATRIX, renderer=p.ER_BULLET_HARDWARE_OPENGL)
+    helper.plot_images(imgs)
 
-    while True:
-        p.stepSimulation(pb_utils.CLIENT)
+    p.resetSimulation(pb_utils.CLIENT)
