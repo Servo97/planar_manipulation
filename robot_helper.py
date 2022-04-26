@@ -140,14 +140,14 @@ def get_board(img, iteration):
     img = img[35:185, ]
     cv2.imwrite(f'./data/output/img_{iteration}.jpg', img)
     img = cv2.resize(img, (96,64), interpolation = cv2.INTER_AREA)
-    img = img[:,10:]
+    # img = img[:,10:]
     _, out = cv2.threshold(img,110,255,cv2.THRESH_BINARY_INV)
     out = cv2.morphologyEx(out, cv2.MORPH_CLOSE, KERNEL)
     return out
 
 def mtr_to_pix(x,y):
-    x = int((x + 0.304)*105.26315)
-    y = int((y + 0.381)*112.86089)
+    y = int((y + 0.304)*105.26315)
+    x = int((x + 0.381)*125.98425)
     return x,y
 
 class ObjectCentricTransport:

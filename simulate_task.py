@@ -44,8 +44,8 @@ with pb_utils.LockRenderer():
                         0.000000, 0.000000, 0.000000, 1.000000], useFixedBase=True, globalScaling=1)
     pb_utils.set_dynamics(franka, 8, linearDamping=0, lateralFriction=1)
     pb_utils.set_dynamics(franka, 9, linearDamping=0, lateralFriction=1)
-    cutting_board = p.loadURDF("./URDFs/Chopping Board/urdf/Chopping Board.urdf", basePosition=[
-                     0.000000, 0.000000, 0.025], baseOrientation=[0.000000, 0.000000, 0.000000, 1.000000], useFixedBase=True)
+    cutting_board = p.loadURDF("./URDFs/Assem4/urdf/Assem4.urdf", basePosition=[
+                     0.000000+BOARD_DIMS[0]/2, 0.000000-BOARD_DIMS[1]/2, 0.00], baseOrientation=[0.000000, 0.000000, 0.000000, 1.000000], useFixedBase=True)
     xs, ys = np.random.choice(np.linspace(-0.28/2, 0.38/2, 2000), N_PARTICLES,
                               replace=False), np.random.choice(np.linspace(-0.25/2, 0.25/2, 2000), N_PARTICLES, replace=False)
     for i in range(N_PARTICLES):
@@ -77,7 +77,7 @@ def initialize_robot_arm(robot, board):
     go_to_position(robot, board_pos)
 
 # def sweep_over_chopping_board(robot, x, y, theta, l, z = 0.0535):
-def sweep_over_chopping_board(robot, y,x, theta, y1, x1, z = 0.0535):
+def sweep_over_chopping_board(robot, x, y, theta, x1, y1, z = 0.0535):
     go_to_position(robot, [x,y,0.1], FIXED_ROTATION)
     time.sleep(0.5)
     ori = rotate_gripper(robot, [x,y,0.1], theta+np.pi/2)
@@ -91,7 +91,7 @@ def sweep_over_chopping_board(robot, y,x, theta, y1, x1, z = 0.0535):
 
 def get_outta_the_way(robot, board):
     board_pos = helper.get_obj_com_position(board)
-    board_pos[2] += 0.1
+    board_pos[2] += 0.2
     board_pos[:2] -= BOARD_DIMS/2
     go_to_position(robot, board_pos)
 
@@ -151,6 +151,7 @@ if __name__=="__main__":
                             best_board = board
                             best_lyp_score = lyp_score
                             best_params_temp = [x1, y1, theta, move_distance]
+                            theta *= -1
                             best_params = [x,y, theta, x+0.095*np.cos(theta), y+0.095*np.sin(theta)]
         print(best_lyp_score, curr_lyp_score)
         if best_lyp_score >= curr_lyp_score or iteration >= 40:
@@ -165,7 +166,7 @@ if __name__=="__main__":
         # initialize_robot_arm(franka, cutting_board)
         # time.sleep(0.5)
         print("HAKUNA2", best_params)
-        sweep_over_chopping_board(franka, *best_params, z = 0.052)
+        sweep_over_chopping_board(franka, *best_params, z = 0.051)
         # Take arm out of sight and click picture
         get_outta_the_way(franka, cutting_board)
         imgs = p.getCameraImage(width=helper.WIDTH,height=helper.HEIGHT,viewMatrix=VIEWMATRIX,projectionMatrix=PROJECTIONMATRIX, renderer=p.ER_BULLET_HARDWARE_OPENGL)
