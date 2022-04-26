@@ -1,10 +1,10 @@
 <package format="2">
-  <name>Assem2</name>
+  <name>Assem4</name>
   <version>1.0.0</version>
   <description>
-    <p>URDF Description package for Assem2</p>
+    <p>URDF Description package for Assem4</p>
     <p>This package contains configuration data, 3D models and launch files
-for Assem2 robot</p>
+for Assem4 robot</p>
   </description>
   <author>TODO</author>
   <maintainer email="TODO@email.com" />
