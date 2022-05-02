@@ -279,7 +279,7 @@
   <joint name="panda_hand_knife_joint" type="fixed">
     <parent link="panda_hand" />
     <child link="knife" />
-    <origin rpy="0 0 1.57079" xyz="0 0 0.08" />
+    <origin rpy="0 0 0" xyz="0 0 0.08" />
     <axis xyz="0 0 0" />
   </joint>
 </robot>

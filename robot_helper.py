@@ -77,7 +77,7 @@ def wait_simulate_for_duration(duration):
         if after - before < dt:
             time.sleep(dt - (after - before))
 
-def control_joint_positions(body, joints, positions, velocities=None, interpolate=10, time_to_run=0.5, verbose=False, **kwargs):
+def control_joint_positions(body, joints, positions, velocities=None, interpolate=10, time_to_run=1, verbose=False, **kwargs):
     if interpolate is not None:
         current_positions = pb_utils.get_joint_positions(body, joints)
         waypoints = np.linspace(current_positions, positions, num=interpolate)[1:]
@@ -146,8 +146,8 @@ def get_board(img, iteration):
     return out
 
 def mtr_to_pix(x,y):
-    y = int((y + 0.304)*105.26315)
-    x = int((x + 0.381)*125.98425)
+    y = int((y + 0.152)*19.456)
+    x = int((x + 0.2285)*43.872)
     return x,y
 
 class ObjectCentricTransport:
@@ -165,7 +165,7 @@ class ObjectCentricTransport:
         else:
             self.board = start_board.to(self.device)
             self.board_shape = np.array([start_board.shape[0], start_board.shape[1]])
-            print(self.board_shape)
+            # print(self.board_shape)
 
 
     def step(self, x, y, theta, move_distance, curr_board):
