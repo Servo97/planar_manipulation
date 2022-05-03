@@ -165,7 +165,7 @@ class ObjectCentricTransport:
         else:
             self.board = start_board.to(self.device)
             self.board_shape = np.array([start_board.shape[0], start_board.shape[1]])
-            # print(self.board_shape)
+            print("Board shape loaded in: ", self.board_shape)
 
 
     def step(self, x, y, theta, move_distance, curr_board):
@@ -185,7 +185,7 @@ class ObjectCentricTransport:
 
         # Adding Chi-Square noise, i.e. simply sum of 2 squared Gaussian random variables
         # TODO - Tune the variance of the gaussian to fit data from PyBullet
-        to_move[:,0] = apply_at[0,0] + move_distance + (torch.randn_like(to_move[:,0])**2 + torch.randn_like(to_move[:,0])**2)/(2*5)
+        to_move[:,0] = apply_at[0,0] + move_distance + (torch.randn_like(to_move[:,0])**2 + torch.randn_like(to_move[:,0])**2)
         to_move = (to_move@ R.T).round().long()
 
         indices_of_interest = torch.logical_and(to_move[:,0] >= 0, to_move[:,1] >= 0)
