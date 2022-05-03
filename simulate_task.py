@@ -151,7 +151,7 @@ if __name__=="__main__":
     iteration = 0
     best_params = []
     torch.set_grad_enabled(False)
-    dynamics = helper.ObjectCentricTransport(torch.Tensor(helper.get_board(imgs, iteration).T))
+    dynamics = helper.ObjectCentricTransport(torch.flip(torch.Tensor(helper.get_board(imgs, iteration).T), dims=(1,)))
 
     # dynamics.board = dynamics.board.T.to(dynamics.device)
     curr_lyp_score = dynamics.lyapunov_function(dynamics.board)
@@ -170,13 +170,16 @@ if __name__=="__main__":
                     # for move_distance in [-0.095, 0.095]: # np.linspace(2,32,5):
                     # for move_distance in [10]: # np.linspace(2,32,5):
                     x1, y1 = helper.mtr_to_pix(x,y)
+                    # print("Image space candidate coordinates (should be within 64,96): ", x1,y1)
                     board, lyp_score = dynamics.step(x1,y1, theta, 10, dynamics.board)
                     if lyp_score < curr_lyp_score and lyp_score < best_lyp_score:
-                        print(x1, y1)
+                        # print(x1, y1)
                         best_board = board
                         best_lyp_score = lyp_score
                         best_params_temp = [x1, y1, theta, 10]
-                        theta -= np.pi/2
+                        print(best_params_temp)
+                        theta -= 3*np.pi/2
+                        print(theta)
                         best_params = [x,y, theta, x+0.0476*np.cos(theta), y+0.0476*np.sin(theta)]
         print(best_lyp_score, curr_lyp_score)
         if best_lyp_score >= curr_lyp_score or iteration >= 40:
@@ -198,9 +201,10 @@ if __name__=="__main__":
         # plt.show()
         # This is for creating GIF
         # rend.append((255*best_board.cpu().detach().numpy()).astype(np.uint8))
-        dynamics.board = torch.Tensor(helper.get_board(imgs, iteration))
-        dynamics.board = dynamics.board.T.to(dynamics.device)
-        curr_lyp_score = best_lyp_score
+        print("Shape of board from pybullet: ", torch.Tensor(helper.get_board(imgs, iteration)).shape)
+        dynamics.board = torch.flip(torch.Tensor(helper.get_board(imgs, iteration).T), dims=(1,))
+        dynamics.board = dynamics.board.to(dynamics.device)
+        curr_lyp_score = dynamics.lyapunov_function(dynamics.board)
         print("Step #{}: ".format(iteration), best_lyp_score)
     # # print("HAKUNA3")
     # # Sample possible starting point and orientation of gripper
