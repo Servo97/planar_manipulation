@@ -138,16 +138,16 @@ def get_board(img, iteration):
     img = np.reshape(img[2], (WIDTH, HEIGHT, 4))
     img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     img = img[35:185, ]
-    cv2.imwrite(f'./data/output/img_{iteration}.jpg', img)
     img = cv2.resize(img, (96,64), interpolation = cv2.INTER_AREA)
     # img = img[:,10:]
     _, out = cv2.threshold(img,110,255,cv2.THRESH_BINARY_INV)
     out = cv2.morphologyEx(out, cv2.MORPH_CLOSE, KERNEL)
+    cv2.imwrite(f'./data/output/img_{iteration}.jpg', out)
     return out
 
 def mtr_to_pix(x,y):
-    y = int((y + 0.152)*19.456)
-    x = int((x + 0.2285)*43.872)
+    y = int((y + 0.152)/0.304*64)
+    x = int((x + 0.2285)/0.457*96)
     return x,y
 
 class ObjectCentricTransport:
