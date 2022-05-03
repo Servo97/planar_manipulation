@@ -194,7 +194,9 @@ if __name__=="__main__":
         imgs = p.getCameraImage(width=helper.WIDTH,height=helper.HEIGHT,viewMatrix=VIEWMATRIX,projectionMatrix=PROJECTIONMATRIX, renderer=p.ER_BULLET_HARDWARE_OPENGL)
         
         # fig, ax = plt.subplots(1,2)
-        # dynamics.board = 1.0 * (torch.rand(dynamics.board_shape[0], dynamics.board_shape[1]) > 0.01).to(dynamics.device)
+        # board_size = dynamics.board_shape[0] * dynamics.board_shape[1]
+        # num_particles = 600
+        # dynamics.board = 1.0 * (torch.rand(dynamics.board_shape[0], dynamics.board_shape[1]) > 0.5*2*(board_size - num_particles)/(board_size)).to(dynamics.device)
         # bb, _ = dynamics.step(*best_params_temp, dynamics.board)
         # ax[0].imshow(dynamics.board.cpu().numpy())
         # ax[1].imshow(bb.cpu().numpy())

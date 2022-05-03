@@ -188,19 +188,19 @@ class ObjectCentricTransport:
         to_move[:,0] = apply_at[0,0] + move_distance + (torch.randn_like(to_move[:,0])**2 + torch.randn_like(to_move[:,0])**2)
         to_move = (to_move@ R.T).round().long()
 
-        indices_of_interest = torch.logical_and(to_move[:,0] >= 0, to_move[:,1] >= 0)
-        indices_of_interest = torch.logical_and(indices_of_interest, to_move[:,0] < self.board_shape[0])
-        indices_of_interest = torch.logical_and(indices_of_interest, to_move[:,1] < self.board_shape[1])
-        to_move = to_move[indices_of_interest]
-        # to_move = torch.maximum(to_move, torch.zeros_like(to_move).to(self.device))
-        # to_move = torch.minimum(to_move, torch.Tensor([[board.shape[0]-1, board.shape[1]-1]]).repeat((to_move.shape[0],1)).to(self.device))
-        # to_move = to_move.round().long()
+        # indices_of_interest = torch.logical_and(to_move[:,0] >= 0, to_move[:,1] >= 0)
+        # indices_of_interest = torch.logical_and(indices_of_interest, to_move[:,0] < self.board_shape[0])
+        # indices_of_interest = torch.logical_and(indices_of_interest, to_move[:,1] < self.board_shape[1])
+        # to_move = to_move[indices_of_interest]
+        to_move = torch.maximum(to_move, torch.zeros_like(to_move).to(self.device))
+        to_move = torch.minimum(to_move, torch.Tensor([[board.shape[0]-1, board.shape[1]-1]]).repeat((to_move.shape[0],1)).to(self.device))
+        to_move = to_move.round().long()
 
         # occupied = to_move[board[to_move[:,0], to_move[:,1]] == 1.0]
         # board[to_move[:,0], to_move[:,1]][board[to_move[:,0], to_move[:,1]] == 0.0] = 1.0
-        # for x,y in occupied:
-        #     self.board_recursion(x, y, board)
-        board[to_move[:,0], to_move[:,1]] = 1.0
+        for x,y in to_move:
+            self.board_recursion(x, y, board)
+        # board[to_move[:,0], to_move[:,1]] = 1.0
         return board, self.lyapunov_function(board)
     
     def board_recursion(self, x,y, board):
