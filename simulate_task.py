@@ -178,9 +178,9 @@ if __name__=="__main__":
                         best_board = board
                         best_lyp_score = lyp_score
                         best_params_temp = [x1, y1, theta, 10]
-                        print(best_params_temp)
+                        # print(best_params_temp)
                         theta -= 3*np.pi/2
-                        print(theta)
+                        # print(theta)
                         best_params = [x,y, theta, x+0.0476*np.cos(theta), y+0.0476*np.sin(theta)]
         print(best_lyp_score, curr_lyp_score)
         if best_lyp_score >= curr_lyp_score or iteration >= 40:
@@ -204,6 +204,7 @@ if __name__=="__main__":
         # plt.show()
         # This is for creating GIF
         # rend.append((255*best_board.cpu().detach().numpy()).astype(np.uint8))
+        print(best_params_temp)
         print("Shape of board from pybullet: ", torch.Tensor(helper.get_board(imgs, iteration)).shape)
         dynamics.board = torch.flip(torch.Tensor(helper.get_board(imgs, iteration).T), dims=(1,))
         dynamics.board = dynamics.board.to(dynamics.device)
