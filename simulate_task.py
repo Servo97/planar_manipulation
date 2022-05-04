@@ -172,7 +172,7 @@ if __name__=="__main__":
                     # for move_distance in [10]: # np.linspace(2,32,5):
                     x1, y1 = helper.mtr_to_pix(x,y)
                     # print("Image space candidate coordinates (should be within 64,96): ", x1,y1)
-                    board, lyp_score = dynamics.step(x1,y1, theta, 10, dynamics.board)
+                    board, lyp_score = dynamics.step(x1,y1, theta, 20, dynamics.board)
                     if lyp_score < curr_lyp_score and lyp_score < best_lyp_score:
                         # print(x1, y1)
                         best_board = board
@@ -181,7 +181,7 @@ if __name__=="__main__":
                         # print(best_params_temp)
                         theta -= 3*np.pi/2
                         # print(theta)
-                        best_params = [x,y, theta, x+0.0476*np.cos(theta), y+0.0476*np.sin(theta)]
+                        best_params = [x,y, theta, x+2*0.0476*np.cos(theta), y+2*0.0476*np.sin(theta)]
         print(best_lyp_score, curr_lyp_score)
         if best_lyp_score >= curr_lyp_score or iteration >= 40:
             break
