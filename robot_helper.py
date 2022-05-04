@@ -168,7 +168,7 @@ class ObjectCentricTransport:
             print("Board shape loaded in: ", self.board_shape)
 
 
-    def step(self, x, y, theta, move_distance, curr_board):
+    def step(self, x, y, theta, move_distance, curr_board, verbose=False):
         board = copy.deepcopy(curr_board)
         coords = torch.nonzero(board).to(self.device)
         R = torch.Tensor([[-np.sin(theta),-np.cos(theta)],[np.cos(theta),-np.sin(theta)]]).to(self.device)
@@ -198,16 +198,29 @@ class ObjectCentricTransport:
 
         # occupied = to_move[board[to_move[:,0], to_move[:,1]] == 1.0]
         # board[to_move[:,0], to_move[:,1]][board[to_move[:,0], to_move[:,1]] == 0.0] = 1.0
+        if verbose:
+            print("Be talkative")
+            fig, ax = plt.subplots(1,2)
+            ax[0].imshow(copy.deepcopy(board).cpu().numpy())
         for x,y in to_move:
             self.board_recursion(x, y, board)
-        # board[to_move[:,0], to_move[:,1]] = 1.0
+        if verbose:
+            print("Theta: ", theta, "x: ", x, "to x: ", int(x+np.sin(theta)*move_distance)+1 ,"y: ", y, "to y: ", int(y+np.cos(theta)*move_distance)+1)
+            print(board[x:int(x+np.sin(theta)*move_distance)+1, y:int(y+np.cos(theta)*move_distance)+1].cpu().numpy())
+            board[x:int(x+np.sin(theta)*move_distance)+1, y:int(y+np.cos(theta)*move_distance)+1] += 128.0
+            print(board[x:int(x+np.sin(theta)*move_distance)+1, y:int(y+np.cos(theta)*move_distance)+1].cpu().numpy())
+            # board[x, y:y+np.sin(theta)*move_distance] +=0.5
+            ax[1].imshow(board.cpu().numpy())
+            plt.show()
+
+        # board[to_move[:,0], to_move[:,1]] = 255.0
         return board, self.lyapunov_function(board)
     
     def board_recursion(self, x,y, board):
         move = [[-1,-1], [-1,1], [1,-1], [1,1], [-1, 0], [0,-1], [1,0], [0,1]]
         if board[x,y] == 0.0:
-            board[x,y] = 1.0
-            return
+            board[x,y] = 255.0
+            return 
         else:
             row = np.random.choice(8, 1)
             new_x, new_y = move[row[0]]
