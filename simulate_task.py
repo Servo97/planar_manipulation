@@ -152,6 +152,7 @@ if __name__=="__main__":
     best_params = []
     torch.set_grad_enabled(False)
     dynamics = helper.ObjectCentricTransport(torch.flip(torch.Tensor(helper.get_board(imgs, iteration).T), dims=(1,)))
+    print("current particle numbers: ", torch.nonzero(dynamics.board).shape[0] )
 
     # dynamics.board = dynamics.board.T.to(dynamics.device)
     curr_lyp_score = dynamics.lyapunov_function(dynamics.board)
@@ -206,6 +207,7 @@ if __name__=="__main__":
         print("Shape of board from pybullet: ", torch.Tensor(helper.get_board(imgs, iteration)).shape)
         dynamics.board = torch.flip(torch.Tensor(helper.get_board(imgs, iteration).T), dims=(1,))
         dynamics.board = dynamics.board.to(dynamics.device)
+        print("current particle numbers: ", torch.nonzero(dynamics.board).shape[0] )
         curr_lyp_score = dynamics.lyapunov_function(dynamics.board)
         print("Step #{}: ".format(iteration), best_lyp_score)
     # # print("HAKUNA3")
