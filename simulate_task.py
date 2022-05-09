@@ -170,6 +170,7 @@ if __name__=="__main__":
                     # for move_distance in [-0.095, 0.095]: # np.linspace(2,32,5):
                     for move_distance in [10]: # np.linspace(2,32,5):
                         x1, y1 = helper.mtr_to_pix(x,y)
+                        
                         board, lyp_score = dynamics.step(x1,y1, theta, 10, dynamics.board)
                         if lyp_score < curr_lyp_score and lyp_score < best_lyp_score:
                             print(x1, y1)
