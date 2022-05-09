@@ -138,16 +138,16 @@ def get_board(img, iteration):
     img = np.reshape(img[2], (WIDTH, HEIGHT, 4))
     img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     img = img[35:185, ]
-    cv2.imwrite(f'./data/output/img_{iteration}.jpg', img)
     img = cv2.resize(img, (96,64), interpolation = cv2.INTER_AREA)
     # img = img[:,10:]
     _, out = cv2.threshold(img,110,255,cv2.THRESH_BINARY_INV)
     out = cv2.morphologyEx(out, cv2.MORPH_CLOSE, KERNEL)
+    cv2.imwrite(f'./data/output/img_{iteration}.jpg', out)
     return out
 
 def mtr_to_pix(x,y):
-    y = int((y + 0.152)*19.456)
-    x = int((x + 0.2285)*43.872)
+    y = int((y + 0.152)/0.304*64)
+    x = int((x + 0.2285)/0.457*96)
     return x,y
 
 class ObjectCentricTransport:
@@ -165,10 +165,10 @@ class ObjectCentricTransport:
         else:
             self.board = start_board.to(self.device)
             self.board_shape = np.array([start_board.shape[0], start_board.shape[1]])
-            # print(self.board_shape)
+            print("Board shape loaded in: ", self.board_shape)
 
 
-    def step(self, x, y, theta, move_distance, curr_board):
+    def step(self, x, y, theta, move_distance, curr_board, verbose=False):
         board = copy.deepcopy(curr_board)
         coords = torch.nonzero(board).to(self.device)
         R = torch.Tensor([[-np.sin(theta),-np.cos(theta)],[np.cos(theta),-np.sin(theta)]]).to(self.device)
@@ -185,29 +185,42 @@ class ObjectCentricTransport:
 
         # Adding Chi-Square noise, i.e. simply sum of 2 squared Gaussian random variables
         # TODO - Tune the variance of the gaussian to fit data from PyBullet
-        to_move[:,0] = apply_at[0,0] + move_distance + (torch.randn_like(to_move[:,0])**2 + torch.randn_like(to_move[:,0])**2)/(2*5)
+        to_move[:,0] = apply_at[0,0] + move_distance + (torch.randn_like(to_move[:,0])**2 + torch.randn_like(to_move[:,0])**2)
         to_move = (to_move@ R.T).round().long()
 
-        indices_of_interest = torch.logical_and(to_move[:,0] >= 0, to_move[:,1] >= 0)
-        indices_of_interest = torch.logical_and(indices_of_interest, to_move[:,0] < self.board_shape[0])
-        indices_of_interest = torch.logical_and(indices_of_interest, to_move[:,1] < self.board_shape[1])
-        to_move = to_move[indices_of_interest]
-        # to_move = torch.maximum(to_move, torch.zeros_like(to_move).to(self.device))
-        # to_move = torch.minimum(to_move, torch.Tensor([[board.shape[0]-1, board.shape[1]-1]]).repeat((to_move.shape[0],1)).to(self.device))
-        # to_move = to_move.round().long()
+        # indices_of_interest = torch.logical_and(to_move[:,0] >= 0, to_move[:,1] >= 0)
+        # indices_of_interest = torch.logical_and(indices_of_interest, to_move[:,0] < self.board_shape[0])
+        # indices_of_interest = torch.logical_and(indices_of_interest, to_move[:,1] < self.board_shape[1])
+        # to_move = to_move[indices_of_interest]
+        to_move = torch.maximum(to_move, torch.zeros_like(to_move).to(self.device))
+        to_move = torch.minimum(to_move, torch.Tensor([[board.shape[0]-1, board.shape[1]-1]]).repeat((to_move.shape[0],1)).to(self.device))
+        to_move = to_move.round().long()
 
         # occupied = to_move[board[to_move[:,0], to_move[:,1]] == 1.0]
         # board[to_move[:,0], to_move[:,1]][board[to_move[:,0], to_move[:,1]] == 0.0] = 1.0
-        # for x,y in occupied:
-        #     self.board_recursion(x, y, board)
-        board[to_move[:,0], to_move[:,1]] = 1.0
+        if verbose:
+            print("Be talkative")
+            fig, ax = plt.subplots(1,2)
+            ax[0].imshow(copy.deepcopy(board).cpu().numpy())
+        for x,y in to_move:
+            self.board_recursion(x, y, board)
+        if verbose:
+            print("Theta: ", theta, "x: ", x, "to x: ", int(x+np.sin(theta)*move_distance)+1 ,"y: ", y, "to y: ", int(y+np.cos(theta)*move_distance)+1)
+            print(board[x:int(x+np.sin(theta)*move_distance)+1, y:int(y+np.cos(theta)*move_distance)+1].cpu().numpy())
+            board[x:int(x+np.sin(theta)*move_distance)+1, y:int(y+np.cos(theta)*move_distance)+1] += 128.0
+            print(board[x:int(x+np.sin(theta)*move_distance)+1, y:int(y+np.cos(theta)*move_distance)+1].cpu().numpy())
+            # board[x, y:y+np.sin(theta)*move_distance] +=0.5
+            ax[1].imshow(board.cpu().numpy())
+            plt.show()
+
+        # board[to_move[:,0], to_move[:,1]] = 255.0
         return board, self.lyapunov_function(board)
     
     def board_recursion(self, x,y, board):
         move = [[-1,-1], [-1,1], [1,-1], [1,1], [-1, 0], [0,-1], [1,0], [0,1]]
         if board[x,y] == 0.0:
-            board[x,y] = 1.0
-            return
+            board[x,y] = 255.0
+            return 
         else:
             row = np.random.choice(8, 1)
             new_x, new_y = move[row[0]]

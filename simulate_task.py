@@ -149,35 +149,53 @@ if __name__=="__main__":
     
     """ Import Switched Dynamics """
     iteration = 0
+    stroke_length_factor = 2.0
     best_params = []
     torch.set_grad_enabled(False)
-    dynamics = helper.ObjectCentricTransport(torch.Tensor(helper.get_board(imgs, iteration).T))
+    dynamics = helper.ObjectCentricTransport(torch.flip(torch.Tensor(helper.get_board(imgs, iteration).T), dims=(1,)))
+    print("current particle numbers: ", torch.nonzero(dynamics.board).shape[0] )
 
     # dynamics.board = dynamics.board.T.to(dynamics.device)
     curr_lyp_score = dynamics.lyapunov_function(dynamics.board)
     # print("HAKUNA")
     while curr_lyp_score > 0:
-        iteration += 1
-        best_board = None
-        best_lyp_score = curr_lyp_score
-        print(dynamics.board.shape)
-        # print("HAKUNA1")
-        # This is exhaustive search -> Needs to be replaced with BO for faster performance
-        for x in np.linspace(-BOARD_DIMS[0]/2, BOARD_DIMS[0]/2,20):
-            for y in np.linspace(-BOARD_DIMS[1]/2, BOARD_DIMS[1]/2,20):
-                for theta in [0., np.pi/2, np.pi, -np.pi/2]:
-                # for theta in [0.]:
-                    # for move_distance in [-0.095, 0.095]: # np.linspace(2,32,5):
-                    for move_distance in [10]: # np.linspace(2,32,5):
+        try:
+            mat_flag = False
+            iteration += 1
+            best_board = None
+            best_lyp_score = curr_lyp_score
+            print(dynamics.board.shape)
+            # print("HAKUNA1")
+            # This is exhaustive search -> Needs to be replaced with BO for faster performance
+            for x in np.linspace(-BOARD_DIMS[0]/2, BOARD_DIMS[0]/2,20):
+                for y in np.linspace(-BOARD_DIMS[1]/2, BOARD_DIMS[1]/2,20):
+                    for theta in [0., np.pi/2, np.pi, np.pi*3/2]:
+                    # for theta in [0.]:
+                        # for move_distance in [-0.095, 0.095]: # np.linspace(2,32,5):
+                        # for move_distance in [10]: # np.linspace(2,32,5):
                         x1, y1 = helper.mtr_to_pix(x,y)
-                        
-                        board, lyp_score = dynamics.step(x1,y1, theta, 10, dynamics.board)
+                        # print("Image space candidate coordinates (should be within 64,96): ", x1,y1)
+                        board, lyp_score = dynamics.step(x1,y1, theta, stroke_length_factor*10, dynamics.board)
                         if lyp_score < curr_lyp_score and lyp_score < best_lyp_score:
-                            print(x1, y1)
+                            # print(x1, y1)
                             best_board = board
                             best_lyp_score = lyp_score
-                            best_params_temp = [x1, y1, theta, move_distance]
-                            best_params = [x,y, theta, x+0.095*np.cos(theta), y+0.095*np.sin(theta)]
+                            best_params_temp = [x1, y1, theta, stroke_length_factor*10]
+                            # print(best_params_temp)
+                            theta -= 3*np.pi/2
+                            # print(theta)
+                            best_params = [x,y, theta, x+stroke_length_factor*0.0476*np.cos(theta), y+stroke_length_factor*0.0476*np.sin(theta)]
+        except KeyboardInterrupt:
+            mat_flag = True
+        if mat_flag:
+            fig, ax = plt.subplots(1,2)
+            # board_size = dynamics.board_shape[0] * dynamics.board_shape[1]
+            # num_particles = 600
+            # dynamics.board = 1.0 * (torch.rand(dynamics.board_shape[0], dynamics.board_shape[1]) > 0.5*2*(board_size - num_particles)/(board_size)).to(dynamics.device)
+            bb, _ = dynamics.step(*best_params_temp, dynamics.board)
+            ax[0].imshow(dynamics.board.cpu().numpy())
+            ax[1].imshow(bb.cpu().numpy())
+            plt.show()
         print(best_lyp_score, curr_lyp_score)
         if best_lyp_score >= curr_lyp_score or iteration >= 40:
             break
@@ -185,21 +203,28 @@ if __name__=="__main__":
         # initialize_robot_arm(franka, cutting_board)
         # time.sleep(0.5)
         print("HAKUNA2", best_params)
-        sweep_over_chopping_board(franka, *best_params, z = 0.040)
+        sweep_over_chopping_board(franka, *best_params, z = 0.037)
         # Take arm out of sight and click picture
         get_outta_the_way(franka, cutting_board)
         imgs = p.getCameraImage(width=helper.WIDTH,height=helper.HEIGHT,viewMatrix=VIEWMATRIX,projectionMatrix=PROJECTIONMATRIX, renderer=p.ER_BULLET_HARDWARE_OPENGL)
-        dynamics.board = torch.Tensor(helper.get_board(imgs, iteration))
-        dynamics.board = dynamics.board.T.to(dynamics.device)
-        fig, ax = plt.subplots(1,2)
-        # dynamics.board = 1.0 * (torch.rand(dynamics.board_shape[0], dynamics.board_shape[1]) > 0.01).to(dynamics.device)
-        bb, _ = dynamics.step(*best_params_temp, dynamics.board)
-        ax[0].imshow(dynamics.board.cpu().numpy())
-        ax[1].imshow(bb.cpu().numpy())
-        plt.show()
+        
+        # if mat_flag:
+        #     fig, ax = plt.subplots(1,2)
+        #     # board_size = dynamics.board_shape[0] * dynamics.board_shape[1]
+        #     # num_particles = 600
+        #     # dynamics.board = 1.0 * (torch.rand(dynamics.board_shape[0], dynamics.board_shape[1]) > 0.5*2*(board_size - num_particles)/(board_size)).to(dynamics.device)
+        #     bb, _ = dynamics.step(*best_params_temp, dynamics.board)
+        #     ax[0].imshow(dynamics.board.cpu().numpy())
+        #     ax[1].imshow(bb.cpu().numpy())
+        #     plt.show()
         # This is for creating GIF
         # rend.append((255*best_board.cpu().detach().numpy()).astype(np.uint8))
-        curr_lyp_score = best_lyp_score
+        print(best_params_temp)
+        print("Shape of board from pybullet: ", torch.Tensor(helper.get_board(imgs, iteration)).shape)
+        dynamics.board = torch.flip(torch.Tensor(helper.get_board(imgs, iteration).T), dims=(1,))
+        dynamics.board = dynamics.board.to(dynamics.device)
+        print("current particle numbers: ", torch.nonzero(dynamics.board).shape[0] )
+        curr_lyp_score = dynamics.lyapunov_function(dynamics.board)
         print("Step #{}: ".format(iteration), best_lyp_score)
     # # print("HAKUNA3")
     # # Sample possible starting point and orientation of gripper
